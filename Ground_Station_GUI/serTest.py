@@ -1,9 +1,9 @@
 import serial
 ser = serial.Serial()
 ser.baudrate = 9600
-ser.port = 'COM5'
+ser.port = 'COM3'
 print(ser.name)
-data = open("data.txt", 'r+')
+data = open("data.txt", 'wb')
 #data = open("test.csv", 'r+')
 #xPos = []
 #xPos = list()
