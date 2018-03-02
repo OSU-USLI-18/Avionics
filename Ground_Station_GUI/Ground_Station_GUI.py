@@ -93,8 +93,8 @@ if __name__ == '__main__':
         # Extract the latitude and convert to decimal degree form
         match = re.search(lat_pattern, cur_line)
         if match is not None:
-            deg = float(str(match.group(1)))
-            min = float(str(match.group(2)))
+            deg = float(match.group(1))
+            min = float(match.group(2))
             lat = deg + (min / 60)
             if str(match.group(3)) == "S":
                 lat = -lat
@@ -104,8 +104,8 @@ if __name__ == '__main__':
         # Extract the longitude and convert to decimal degree form
         match = re.search(lon_pattern, cur_line)
         if match is not None:
-            deg = float("{}".format(match.group(1)))
-            min = float("{}".format(match.group(2)))
+            deg = float(match.group(1))
+            min = float(match.group(2))
             lon = deg + (min / 60)
             if str(match.group(3)) == "W":
                 lon = -lon
