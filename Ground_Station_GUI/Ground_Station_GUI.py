@@ -9,7 +9,7 @@ import re
 import utm
 import math
 
-def serial_port():
+def find_serial_ports():
     if sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
@@ -28,9 +28,23 @@ def serial_port():
             result.append(port)
         except (OSError, serial.SerialException):
             pass
-    return result[0]
+    return result
 
 if __name__ == '__main__':
+    # Detername name of serial port
+    ports = find_serial_ports()
+    if len(ports) == 0:
+        raise Exception("No serial ports found")
+    elif len(ports) > 1:
+        print("Multiple serial ports found: ", ports)
+        port_name = input("Enter the port you would like to use: ".format(ports))
+        while port_name not in ports:
+            print("Error: not a port name")
+            port_name = input("Enter the port you would like to use: ")
+    else:
+        port_name = ports[0]
+
+    # Declare plot variables
     ydata = [0]
     xdata = [0]
     x = 0
@@ -58,64 +72,88 @@ if __name__ == '__main__':
     lat_pattern = re.compile(r"([0-9]{2})([0-9]{2}\.[0-9]+),(N|S)")
     lon_pattern = re.compile(r"([0-9]{3})([0-9]{2}\.[0-9]+),(E|W)")
 
+    # Defines paramaters for distance/angle text box
     props = dict(boxstyle="square", facecolor="aliceblue", alpha=0.5)
     
-    with open("example_data.txt", "r") as filestream:
-        for i, cur_line in enumerate(filestream):
-            # Extract the latitude and convert to decimal degree form
-            match = re.search(lat_pattern, cur_line)
-            if match is not None:
-                deg = float(str(match.group(1)))
-                min = float(str(match.group(2)))
-                lat = deg + (min / 60)
-                if str(match.group(3)) == "S":
-                    lat = -lat
+    # Flag for whether or not the origin has been read
+    read_origin = False
 
-            # Extract the longitude and convert to decimal degree form
-            match = re.search(lon_pattern, cur_line)
-            if match is not None:
-                deg = float("{}".format(match.group(1)))
-                min = float("{}".format(match.group(2)))
-                lon = deg + (min / 60)
-                if str(match.group(3)) == "W":
-                    lon = -lon
+    # Opens a file named output.txt for writing the serial data to
+    data = open("output.txt", 'wb')
 
-            # Convert lat/lon into UTM (standardized 2D cartesian projection)
-            x, y, _, _ = utm.from_latlon(lat, lon)
+    # Opens serial port at port_name with 9600 baud and 3 second timeout
+    ser = serial.Serial(port_name, 9600, timeout=3)
 
-            # Set first point as origin (0,0)
-            if i == 0:
-                x_origin = x
-                y_origin = y
+    while True:
+        cur_line = ser.readline()
+        if len(cur_line) == 0:
+            break
+        data.write(cur_line)
 
-            # All other points are relative to this origin
-            else:
-                x = x - x_origin
-                y = y - y_origin
+        # Extract the latitude and convert to decimal degree form
+        match = re.search(lat_pattern, cur_line)
+        if match is not None:
+            deg = float(str(match.group(1)))
+            min = float(str(match.group(2)))
+            lat = deg + (min / 60)
+            if str(match.group(3)) == "S":
+                lat = -lat
+        else:
+            continue
 
-                # Add new data point
-                xdata.append(x)
-                ydata.append(y)
-                line.set_xdata(xdata)
-                line.set_ydata(ydata)
+        # Extract the longitude and convert to decimal degree form
+        match = re.search(lon_pattern, cur_line)
+        if match is not None:
+            deg = float("{}".format(match.group(1)))
+            min = float("{}".format(match.group(2)))
+            lon = deg + (min / 60)
+            if str(match.group(3)) == "W":
+                lon = -lon
+        else:
+            continue
 
-                # Redraw plot and adjust axes
-                ax.draw_artist(ax.patch)
-                ax.draw_artist(line)
-                ax.relim()
-                ax.autoscale_view()
-                fig.canvas.draw()
-                fig.canvas.flush_events()
-                num_plots += 1
+        # Convert lat/lon into UTM (standardized 2D cartesian projection)
+        x, y, _, _ = utm.from_latlon(lat, lon)
 
-                # Compute and print absolute distance and angle from origin
-                dist = math.sqrt(x**2 + y**2)
-                angle = math.degrees(math.atan2(y,x))
-                if text is not None:
-                    text.remove()
-                text = ax.text(0.05, 0.05, "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle), fontsize=12, transform=ax.transAxes, bbox=props)
+        # Set first point as origin (0,0)
+        if not read_origin:
+            x_origin = x
+            y_origin = y
+            read_origin = True
+
+        # All other points are relative to this origin
+        else:
+            x = x - x_origin
+            y = y - y_origin
+
+            # Add new data point
+            xdata.append(x)
+            ydata.append(y)
+            line.set_xdata(xdata)
+            line.set_ydata(ydata)
+
+            # Redraw plot and adjust axes
+            ax.draw_artist(ax.patch)
+            ax.draw_artist(line)
+            ax.relim()
+            ax.autoscale_view()
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+            num_plots += 1
+
+            # Compute and print absolute distance and angle from origin
+            dist = math.sqrt(x**2 + y**2)
+            angle = math.degrees(math.atan2(y,x))
+            if text is not None:
+                text.remove()
+            text = ax.text(0.05, 0.05, "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle), fontsize=12, transform=ax.transAxes, bbox=props)
         
-        # Prompt user to save the figure
-        file_name = input("Save figure as: ")
-        plt.savefig(file_name)
+    # Close serial port and file stream
+    data.close()
+    ser.close()
+
+    # Prompt user to save the figure
+    file_name = input("Save figure as: ")
+    plt.savefig(file_name)
+
 
