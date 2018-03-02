@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>807d041a-fb28-45ad-ab67-a9a05e948532</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>serial_ports.py</StartupFile>
+    <StartupFile>Ground_Station_GUI.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,9 +21,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="serial_ports.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Ground_Station_GUI.py" />
     <Compile Include="serTest.py" />
   </ItemGroup>
