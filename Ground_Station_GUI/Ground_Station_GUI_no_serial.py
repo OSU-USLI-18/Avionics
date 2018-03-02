@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 import numpy as np
-import time
 import sys
 import glob
 import serial
@@ -118,4 +117,3 @@ if __name__ == '__main__':
         # Prompt user to save the figure
         file_name = input("Save figure as: ")
         plt.savefig(file_name)
-
