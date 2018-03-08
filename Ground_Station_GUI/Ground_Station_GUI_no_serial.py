@@ -41,6 +41,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     line, = ax.plot(xdata, ydata)
     plt.show(block=False)
+    fig.canvas.draw()
 
     # Set to fullscreen
     mng = plt.get_current_fig_manager()

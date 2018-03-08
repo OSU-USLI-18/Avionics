@@ -55,6 +55,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     line, = ax.plot(xdata, ydata)
     plt.show(block=False)
+    fig.canvas.draw()
 
     # Set to fullscreen
     mng = plt.get_current_fig_manager()
@@ -151,6 +152,5 @@ if __name__ == '__main__':
     data.close()
     ser.close()
 
-    # Prompt user to save the figure
-    file_name = input("Save figure as: ")
-    plt.savefig(file_name)
+    # Prompt user to close
+    input("Press enter to exit.")
