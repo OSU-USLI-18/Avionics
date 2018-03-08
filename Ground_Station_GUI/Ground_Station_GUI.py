@@ -82,13 +82,21 @@ if __name__ == '__main__':
     data = open("output.txt", 'wb')
 
     # Opens serial port at port_name with 9600 baud and 3 second timeout
-    ser = serial.Serial(port_name, 9600, timeout=3)
+    ser = serial.Serial(port_name, 9600, timeout=30)
 
     while True:
-        cur_line = ser.readline()
+        while ser.read() != b'@':
+            pass
+        ser_line = ser.read(50)
+        try:
+            cur_line = ser_line.decode("utf-8")
+            print(cur_line)
+        except UnicodeDecodeError:
+            print("Malformed line")
+            continue
         if len(cur_line) == 0:
             break
-        data.write(cur_line)
+        data.write(ser_line)
 
         # Extract the latitude and convert to decimal degree form
         match = re.search(lat_pattern, cur_line)
@@ -147,7 +155,7 @@ if __name__ == '__main__':
             if text is not None:
                 text.remove()
             text = ax.text(0.05, 0.05, "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle), fontsize=12, transform=ax.transAxes, bbox=props)
-        
+      
     # Close serial port and file stream
     data.close()
     ser.close()
