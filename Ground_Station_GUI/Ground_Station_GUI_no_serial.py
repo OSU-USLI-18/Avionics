@@ -44,8 +44,13 @@ if __name__ == '__main__':
     with open("twoATU_exampleData.txt", "r") as filestream:
         while True:
             # Read characters until we find the "@" delimiter
-            while filestream.read(1) != '@':
-                pass
+            c = filestream.read(1)
+            while c and c != '@':
+                c = filestream.read(1)
+
+            # Break at end of file
+            if not c:
+                break
 
             # Read a line of GPS data and discard the next two characters (?,)
             cur_line = filestream.read(50)
@@ -60,6 +65,10 @@ if __name__ == '__main__':
                 if str(match.group(3)) == "S":
                     lat = -lat
 
+            # If the data does not match the expected format, skip it
+            else:
+                continue
+
             # Extract the longitude and convert to decimal degree form
             match = re.search(lon_pattern, cur_line)
             if match is not None:
@@ -68,6 +77,10 @@ if __name__ == '__main__':
                 lon = deg + (min / 60)
                 if str(match.group(3)) == "W":
                     lon = -lon
+
+            # If the data does not match the expected format, skip it
+            else:
+                continue
 
             # Convert lat/lon into UTM (standardized 2D cartesian projection)
             x, y, _, _ = utm.from_latlon(lat, lon)
