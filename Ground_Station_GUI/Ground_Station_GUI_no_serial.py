@@ -1,14 +1,8 @@
 import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
-import numpy as np
-import sys
-import glob
-import serial
-import re
-import utm
-import math
+import sys, glob, serial, re, utm, math
 
 if __name__ == '__main__':
+    # Declare plot variables
     s_x_data, s_y_data, r_x_data, r_y_data = [0], [0], [0], [0]
     s_text, r_text = None, None
 
@@ -19,7 +13,7 @@ if __name__ == '__main__':
     plt.show(block=False)
     fig.canvas.draw()
 
-    # Set to fullscreen
+    # Set to fullscreen, square axes
     mng = plt.get_current_fig_manager()
     mng.window.state('zoomed')
     plt.gca().set_aspect('equal', adjustable='box')

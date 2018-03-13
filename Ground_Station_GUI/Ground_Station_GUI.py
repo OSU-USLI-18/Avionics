@@ -1,13 +1,7 @@
 import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
-import numpy as np
-import sys
-import glob
-import serial
-import re
-import utm
-import math
+import sys, glob, serial, re, utm, math
 
+# Helper function for discovering serial ports
 def find_serial_ports():
     if sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
@@ -36,7 +30,7 @@ if __name__ == '__main__':
         raise Exception("No serial ports found")
     elif len(ports) > 1:
         print("Multiple serial ports found: ", ports)
-        port_name = input("Enter the port you would like to use: ".format(ports))
+        port_name = input("Enter the port you would like to use: ")
         while port_name not in ports:
             print("Error: not a port name")
             port_name = input("Enter the port you would like to use: ")
