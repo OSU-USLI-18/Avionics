@@ -78,7 +78,7 @@ if __name__ == '__main__':
         # Read characters until we find the "@" delimiter
         c = ser.read(1)
         while len(c) != 0 and c != b'@':
-            pass
+            c = ser.read(1)
 
         # Read a line of GPS data
         ser_line = ser.read(50)
