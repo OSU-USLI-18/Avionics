@@ -54,7 +54,6 @@ if __name__ == '__main__':
     plt.gca().set_aspect('equal', adjustable='box')
     
     # Set labels and create grid
-    # Set labels and create grid
     s_ax.set_title("Launch Vehicle Drift (Summer)")
     s_ax.set_xlabel("East (m)")
     s_ax.set_ylabel("North (m)")
