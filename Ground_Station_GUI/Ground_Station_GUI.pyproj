@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>807d041a-fb28-45ad-ab67-a9a05e948532</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Ground_Station_GUI.py</StartupFile>
+    <StartupFile>Ground_Station_GUI_no_serial.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

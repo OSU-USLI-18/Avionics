@@ -44,11 +44,7 @@ if __name__ == '__main__':
         port_name = ports[0]
 
     # Declare plot variables
-    ydata = [0]
-    xdata = [0]
-    x = 0
-    y = 0
-    num_plots = 0
+    ydata, xdata = [0], [0]
     text = None
 
     # Create plot
@@ -85,17 +81,26 @@ if __name__ == '__main__':
     ser = serial.Serial(port_name, 9600, timeout=30)
 
     while True:
+        # Read characters until we find the "@" delimiter
         while ser.read() != b'@':
             pass
+
+        # Read a line of GPS data
         ser_line = ser.read(50)
+
+        # If we get empty data (meaning a timeout), exit
+        if len(ser_line) == 0:
+            break
+
+        # Try to decode the line, report a malformed line and skip it if we can't
         try:
             cur_line = ser_line.decode("utf-8")
             print(cur_line)
         except UnicodeDecodeError:
             print("Malformed line")
             continue
-        if len(cur_line) == 0:
-            break
+        
+        # Write the serial data to our output text file
         data.write(ser_line)
 
         # Extract the latitude and convert to decimal degree form
@@ -106,6 +111,8 @@ if __name__ == '__main__':
             lat = deg + (min / 60)
             if str(match.group(3)) == "S":
                 lat = -lat
+
+        # If the data does not match the expected format, skip it
         else:
             continue
 
@@ -117,6 +124,8 @@ if __name__ == '__main__':
             lon = deg + (min / 60)
             if str(match.group(3)) == "W":
                 lon = -lon
+
+        # If the data does not match the expected format, skip it
         else:
             continue
 
@@ -150,7 +159,7 @@ if __name__ == '__main__':
             num_plots += 1
 
             # Compute and print absolute distance and angle from origin
-            dist = math.sqrt(x**2 + y**2)
+            dist  = math.sqrt(x**2 + y**2)
             angle = math.degrees(math.atan2(y,x))
             if text is not None:
                 text.remove()
@@ -160,5 +169,5 @@ if __name__ == '__main__':
     data.close()
     ser.close()
 
-    # Prompt user to close
+    # Prompt user to exit
     input("Press enter to exit.")
