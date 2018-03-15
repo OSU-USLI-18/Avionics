@@ -76,28 +76,37 @@ if __name__ == '__main__':
     r_read_origin = False
 
     # Opens serial port at port_name with 9600 baud and 3 second timeout
-    ser = serial.Serial(port_name, 9600, timeout=30)
+    ser = serial.Serial(port_name, 9600, timeout=30000)
 
     while True:
         # Read characters until we find the "@" delimiter
-        c = ser.read(1)
-        while len(c) != 0 and c != b'@':
-            c = ser.read(1)
+        while ser.read() != b'@':
+            pass
 
         # Read a line of GPS data and discard the next two characters (?,)
         ser_line = ser.read(50)
         ser.read(2)
 
-        # If we get empty data (meaning a timeout), exit
-        if len(ser_line) == 0:
-            break
+        # Try to get the name of the ATU
+        try:
+            atu_name = ser.read(4).decode("utf-8")
+            if atu_name == "summ":
+                atu_name += "er"
+                ser.read(2)     # Discard the "er"
+            print(atu_name, ": ", sep='', end='')
+        except UnicodeDecodeError:
+            print("Unable to decode ATU name")
+            continue
 
         # Try to decode the line, report a malformed line and skip it if we can't
         try:
             cur_line = ser_line.decode("utf-8")
-            print(cur_line)
         except UnicodeDecodeError:
             print("Unable to decode GPS data")
+            continue
+
+        if cur_line.endswith("0000.0000,N,00000.0000,E,000.0"):
+            print("Sensor not locked")
             continue
 
         # Extract the latitude and convert to decimal degree form
@@ -111,6 +120,7 @@ if __name__ == '__main__':
 
         # If the data does not match the expected format, skip it
         else:
+            print("Latitude did not match expected regex format")
             continue
 
         # Extract the longitude and convert to decimal degree form
@@ -124,21 +134,17 @@ if __name__ == '__main__':
 
         # If the data does not match the expected format, skip it
         else:
+            print("Longitude did not match expected regex format")
             continue
+
+        # If the data is valid and non-zero, print it
+        print(cur_line)
 
         # Convert lat/lon into UTM (standardized 2D cartesian projection)
         x, y, _, _ = utm.from_latlon(lat, lon)
 
-        # Get the name of the ATU
-        try:
-            atu_name = ser.read(4).decode("utf-8")
-        except UnicodeDecodeError:
-            print("Unable to decode ATU name")
-            continue
-
         # If the data came from Summer
-        if atu_name == "summ":
-            filestream.read(2) # discard "er"
+        if atu_name == "summer":
 
             # Set first point as origin (0,0)
             if not s_read_origin:
@@ -175,7 +181,7 @@ if __name__ == '__main__':
             
         # If the data came from Rick
         elif atu_name == "rick":
-
+            
             # Set first point as origin (0,0)
             if not r_read_origin:
                 r_x_origin = x
@@ -211,10 +217,10 @@ if __name__ == '__main__':
 
         # If neither of names are found, skip to next data set
         else:
+            print("ATU name not recognized")
             continue
       
-    # Close serial port and file stream
-    data.close()
+    # Close serial port
     ser.close()
 
     # Prompt user to exit
