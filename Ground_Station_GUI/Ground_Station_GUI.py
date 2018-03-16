@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
         # If the data is valid and non-zero, print it to stdout and our output file
         print(cur_line)
-        output.write(cur_line)
+        output.write(cur_line + "\n")
 
         # Convert lat/lon into UTM (standardized 2D cartesian projection)
         x, y, _, _ = utm.from_latlon(lat, lon)
