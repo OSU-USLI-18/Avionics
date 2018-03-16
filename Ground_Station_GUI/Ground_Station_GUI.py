@@ -69,34 +69,30 @@ if __name__ == '__main__':
     read_origin = False
 
     # Opens a file named output.txt for writing the serial data to
-    data = open("output.txt", 'wb')
+    output = open("output.txt", 'w')
 
     # Opens serial port at port_name with 9600 baud and 3 second timeout
-    ser = serial.Serial(port_name, 9600, timeout=30)
+    ser = serial.Serial(port_name, 9600, timeout=30000)
 
     while True:
         # Read characters until we find the "@" delimiter
-        c = ser.read(1)
-        while len(c) != 0 and c != b'@':
-            c = ser.read(1)
+        while ser.read() != b'@':
+            pass
 
         # Read a line of GPS data
         ser_line = ser.read(50)
 
-        # If we get empty data (meaning a timeout), exit
-        if len(ser_line) == 0:
-            break
-
-        # Try to decode the line, report a malformed line and skip it if we can't
+        # Try to decode the line, skip it if we can't
         try:
             cur_line = ser_line.decode("utf-8")
-            print(cur_line)
         except UnicodeDecodeError:
-            print("Malformed line")
+            print("Could not decode serial data")
             continue
-        
-        # Write the serial data to our output text file
-        data.write(ser_line)
+
+        # If the GPS data is zeroes, skip it
+        if cur_line.endswith("0000.0000,N,00000.0000,E,000.0"):
+            print("Sensor not locked")
+            continue
 
         # Extract the latitude and convert to decimal degree form
         match = re.search(lat_pattern, cur_line)
@@ -109,6 +105,7 @@ if __name__ == '__main__':
 
         # If the data does not match the expected format, skip it
         else:
+            print("Latitude did not match expected regex format")
             continue
 
         # Extract the longitude and convert to decimal degree form
@@ -122,7 +119,12 @@ if __name__ == '__main__':
 
         # If the data does not match the expected format, skip it
         else:
+            print("Latitude did not match expected regex format")
             continue
+
+        # If the data is valid and non-zero, print it to stdout and our output file
+        print(cur_line)
+        output.write(cur_line)
 
         # Convert lat/lon into UTM (standardized 2D cartesian projection)
         x, y, _, _ = utm.from_latlon(lat, lon)
@@ -158,10 +160,11 @@ if __name__ == '__main__':
             angle = math.degrees(math.atan2(y,x))
             if text is not None:
                 text.remove()
-            text = ax.text(0.05, 0.05, "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle), fontsize=12, transform=ax.transAxes, bbox=props)
+            text_str = "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle)
+            text = ax.text(0.05, 0.05, text_str, fontsize=12, transform=ax.transAxes, bbox=props)
       
     # Close serial port and file stream
-    data.close()
+    output.close()
     ser.close()
 
     # Prompt user to exit
