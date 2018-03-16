@@ -75,6 +75,9 @@ if __name__ == '__main__':
     s_read_origin = False
     r_read_origin = False
 
+    # Opens a file named output.txt for writing the serial data to
+    output = open("output.txt", 'w')
+
     # Opens serial port at port_name with 9600 baud and 3 second timeout
     ser = serial.Serial(port_name, 9600, timeout=30000)
 
@@ -93,7 +96,9 @@ if __name__ == '__main__':
             if atu_name == "summ":
                 atu_name += "er"
                 ser.read(2)     # Discard the "er"
-            print(atu_name, ": ", sep='', end='')
+            str_to_print = (atu_name + ":").ljust(8)
+            print(str_to_print, end='')
+            output.write(str_to_print)
         except UnicodeDecodeError:
             print("Unable to decode ATU name")
             continue
@@ -137,8 +142,9 @@ if __name__ == '__main__':
             print("Longitude did not match expected regex format")
             continue
 
-        # If the data is valid and non-zero, print it
+        # If the data is valid and non-zero, print it to stdout and our output file
         print(cur_line)
+        output.write(cur_line + "\n")
 
         # Convert lat/lon into UTM (standardized 2D cartesian projection)
         x, y, _, _ = utm.from_latlon(lat, lon)
@@ -220,8 +226,9 @@ if __name__ == '__main__':
             print("ATU name not recognized")
             continue
       
-    # Close serial port
+    # Close the serial port and the filestream
     ser.close()
+    output.close()
 
     # Prompt user to exit
     input("Press enter to exit.")
