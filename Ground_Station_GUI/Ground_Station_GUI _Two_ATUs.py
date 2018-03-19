@@ -1,17 +1,22 @@
 import matplotlib.pyplot as plt
-import sys, glob, serial, re, utm, math
+import sys
+import glob
+import serial
+import re
+import utm
+import math
 
-# Helper function for discovering serial ports
+# Helper function for discovering serial ports.
 def find_serial_ports():
-    if sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(256)]
-    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        # this excludes your current terminal "/dev/tty"
-        ports = glob.glob('/dev/tty[A-Za-z]*')
-    elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.*')
+    if sys.platform.startswith("win"):
+        ports = ["COM%s" % (i + 1) for i in range(256)]
+    elif sys.platform.startswith("linux") or sys.platform.startswith("cygwin"):
+        # This excludes your current terminal "/dev/tty".
+        ports = glob.glob("/dev/tty[A-Za-z]*")
+    elif sys.platform.startswith("darwin"):
+        ports = glob.glob("/dev/tty.*")
     else:
-        raise EnvironmentError('Unsupported platform')
+        raise EnvironmentError("Unsupported platform")
 
     result = []
     for port in ports:
@@ -23,8 +28,8 @@ def find_serial_ports():
             pass
     return result
 
-if __name__ == '__main__':
-    # Detername name of serial port
+if __name__ == "__main__":
+    # Detername name of serial port.
     ports = find_serial_ports()
     if len(ports) == 0:
         raise Exception("No serial ports found")
@@ -37,23 +42,23 @@ if __name__ == '__main__':
     else:
         port_name = ports[0]
 
-    # Declare plot variables
+    # Declare plot variables.
     s_x_data, s_y_data, r_x_data, r_y_data = [0], [0], [0], [0]
     s_text, r_text = None, None
 
-    # Create plot
+    # Create plot.
     fig, (s_ax, r_ax) = plt.subplots(1, 2)
     s_line, = s_ax.plot(s_x_data, s_y_data)
     r_line, = r_ax.plot(r_x_data, r_y_data)
     plt.show(block=False)
     fig.canvas.draw()
 
-    # Set to fullscreen, square axes
+    # Set to fullscreen, square axes.
     mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')
-    plt.gca().set_aspect('equal', adjustable='box')
+    mng.window.state("zoomed")
+    plt.gca().set_aspect("equal", adjustable="box")
     
-    # Set labels and create grid
+    # Set labels and create grid.
     s_ax.set_title("Launch Vehicle Drift (Summer)")
     s_ax.set_xlabel("East (m)")
     s_ax.set_ylabel("North (m)")
@@ -64,57 +69,58 @@ if __name__ == '__main__':
     r_ax.set_ylabel("North (m)")
     r_ax.grid(color="k", linestyle="-", linewidth=0.5)
 
-    # Regex for extracting latitude and longitude
+    # Regex for extracting latitude and longitude.
     lat_pattern = re.compile(r"([0-9]{2})([0-9]{2}\.[0-9]+),(N|S)")
     lon_pattern = re.compile(r"([0-9]{3})([0-9]{2}\.[0-9]+),(E|W)")
 
-    # Defines paramaters for distance/angle text box
+    # Defines paramaters for distance/angle text box.
     props = dict(boxstyle="square", facecolor="aliceblue", alpha=0.5)
     
-    # Flags for whether or not the origin has been read
+    # Flags for whether or not the origin has been read.
     s_read_origin = False
     r_read_origin = False
 
-    # Opens a file named output.txt for writing the serial data to
-    output = open("output.txt", 'w')
+    # Opens a file named output.txt for writing the serial data to.
+    output = open("output.txt", "w")
 
-    # Opens serial port at port_name with 9600 baud and 3 second timeout
+    # Opens serial port at port_name with 9600 baud and 3 second timeout.
     ser = serial.Serial(port_name, 9600, timeout=30000)
 
     while True:
-        # Read characters until we find the "@" delimiter
-        while ser.read() != b'@':
+        # Read characters until we find the "@" delimiter.
+        while ser.read() != b"@":
             pass
 
-        # Read a line of GPS data and discard the next two characters (?,)
+        # Read a line of GPS data and discard the next two characters (?,).
         ser_line = ser.read(50)
         ser.read(2)
 
-        # Try to get the name of the ATU
+        # Try to get the name of the ATU.
         try:
             atu_name = ser.read(4).decode("utf-8")
             if atu_name == "summ":
                 atu_name += "er"
-                ser.read(2)     # Discard the "er"
+                ser.read(2)     # Discard the "er".
             str_to_print = (atu_name + ":").ljust(8)
-            print(str_to_print, end='')
+            print(str_to_print, end="")
             output.write(str_to_print)
         except UnicodeDecodeError:
             print("Unable to decode ATU name")
             continue
 
-        # Try to decode the line, report a malformed line and skip it if we can't
+        # Try to decode the line, report a malformed line and skip it if we can't.
         try:
             cur_line = ser_line.decode("utf-8")
         except UnicodeDecodeError:
             print("Unable to decode GPS data")
             continue
 
+        # Skip data sent while ATU is not locked.
         if cur_line.endswith("0000.0000,N,00000.0000,E,000.0"):
             print("Sensor not locked")
             continue
 
-        # Extract the latitude and convert to decimal degree form
+        # Extract the latitude and convert to decimal degree form.
         match = re.search(lat_pattern, cur_line)
         if match is not None:
             deg = float(match.group(1))
@@ -123,12 +129,12 @@ if __name__ == '__main__':
             if str(match.group(3)) == "S":
                 lat = -lat
 
-        # If the data does not match the expected format, skip it
+        # If the data does not match the expected format, skip it.
         else:
             print("Latitude did not match expected regex format")
             continue
 
-        # Extract the longitude and convert to decimal degree form
+        # Extract the longitude and convert to decimal degree form.
         match = re.search(lon_pattern, cur_line)
         if match is not None:
             deg = float(match.group(1))
@@ -137,39 +143,39 @@ if __name__ == '__main__':
             if str(match.group(3)) == "W":
                 lon = -lon
 
-        # If the data does not match the expected format, skip it
+        # If the data does not match the expected format, skip it.
         else:
             print("Longitude did not match expected regex format")
             continue
 
-        # If the data is valid and non-zero, print it to stdout and our output file
+        # If the data is valid and non-zero, print it to stdout and our output file.
         print(cur_line)
         output.write(cur_line + "\n")
 
-        # Convert lat/lon into UTM (standardized 2D cartesian projection)
+        # Convert lat/lon into UTM (standardized 2D cartesian projection).
         x, y, _, _ = utm.from_latlon(lat, lon)
 
-        # If the data came from Summer
+        # If the data came from Summer.
         if atu_name == "summer":
 
-            # Set first point as origin (0,0)
+            # Set first point as origin (0,0).
             if not s_read_origin:
                 s_x_origin = x
                 s_y_origin = y
                 s_read_origin = True
 
-            # All other points are relative to this origin
+            # All other points are relative to this origin.
             else:
                 x = x - s_x_origin
                 y = y - s_y_origin
 
-                # Add new data point
+                # Add new data point.
                 s_x_data.append(x)
                 s_y_data.append(y)
                 s_line.set_xdata(s_x_data)
                 s_line.set_ydata(s_y_data)
 
-                # Compute and print absolute distance and angle from origin
+                # Compute and print absolute distance and angle from origin.
                 dist  = math.sqrt(x**2 + y**2)
                 angle = math.degrees(math.atan2(y,x))
                 if s_text is not None:
@@ -177,7 +183,7 @@ if __name__ == '__main__':
                 text = "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle)
                 s_text = s_ax.text(0.05, 0.05, text, fontsize=12, transform=s_ax.transAxes, bbox=props)
 
-                # Redraw plot and adjust axes
+                # Redraw plot and adjust axes.
                 s_ax.draw_artist(s_ax.patch)
                 s_ax.draw_artist(s_line)
                 s_ax.relim()
@@ -185,16 +191,16 @@ if __name__ == '__main__':
                 fig.canvas.draw()
                 fig.canvas.flush_events()
             
-        # If the data came from Rick
+        # If the data came from Rick.
         elif atu_name == "rick":
             
-            # Set first point as origin (0,0)
+            # Set first point as origin (0,0).
             if not r_read_origin:
                 r_x_origin = x
                 r_y_origin = y
                 r_read_origin = True
 
-            # All other points are relative to this origin
+            # All other points are relative to this origin.
             else:
                 x = x - r_x_origin
                 y = y - r_y_origin
@@ -205,7 +211,7 @@ if __name__ == '__main__':
                 r_line.set_xdata(r_x_data)
                 r_line.set_ydata(r_y_data)
 
-                # Compute and print absolute distance and angle from origin
+                # Compute and print absolute distance and angle from origin.
                 dist  = math.sqrt(x**2 + y**2)
                 angle = math.degrees(math.atan2(y,x))
                 if r_text is not None:
@@ -213,7 +219,7 @@ if __name__ == '__main__':
                 text = "Distance: {0:.2f} m\nAngle: {1:.2f}$^\circ$".format(dist, angle)
                 r_text = r_ax.text(0.05, 0.05, text, fontsize=12, transform=r_ax.transAxes, bbox=props)
 
-                # Redraw plot and adjust axes
+                # Redraw plot and adjust axes.
                 r_ax.draw_artist(r_ax.patch)
                 r_ax.draw_artist(r_line)
                 r_ax.relim()
@@ -221,14 +227,14 @@ if __name__ == '__main__':
                 fig.canvas.draw()
                 fig.canvas.flush_events()
 
-        # If neither of names are found, skip to next data set
+        # If neither of names are found, skip to next data set.
         else:
             print("ATU name not recognized")
             continue
       
-    # Close the serial port and the filestream
+    # Close the serial port and the filestream.
     ser.close()
     output.close()
 
-    # Prompt user to exit
+    # Prompt user to exit.
     input("Press enter to exit.")
