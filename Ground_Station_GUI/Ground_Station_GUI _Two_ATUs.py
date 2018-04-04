@@ -69,9 +69,10 @@ if __name__ == "__main__":
     r_ax.set_ylabel("North (m)")
     r_ax.grid(color="k", linestyle="-", linewidth=0.5)
 
-    # Regex for extracting latitude and longitude.
-    lat_pattern = re.compile(r"([0-9]{2})([0-9]{2}\.[0-9]+),(N|S)")
-    lon_pattern = re.compile(r"([0-9]{3})([0-9]{2}\.[0-9]+),(E|W)")
+   # Regex for extracting time, latitude, and longitude.
+    time_pattern = re.compile(r"([0-9]{2})([0-9]{2})([0-9]{2}\.[0-9]{3}),A")
+    lat_pattern  = re.compile(r"([0-9]{2})([0-9]{2}\.[0-9]+),(N|S)")
+    lon_pattern  = re.compile(r"([0-9]{3})([0-9]{2}\.[0-9]+),(E|W)")
 
     # Defines paramaters for distance/angle text box.
     props = dict(boxstyle="square", facecolor="aliceblue", alpha=0.5)
@@ -120,6 +121,18 @@ if __name__ == "__main__":
             print("Sensor not locked")
             continue
 
+        # Extract the time and break into hours, minutes, seconds.
+        match = re.search(time_pattern, cur_line)
+        if match is not None:
+            hour   = int(match.group(1))
+            minute = int(match.group(2))
+            second = float(match.group(3))
+
+        # If the data does not match the expected format, skip it.
+        else:
+            print("Time did not match expected regex format")
+            continue
+
         # Extract the latitude and convert to decimal degree form.
         match = re.search(lat_pattern, cur_line)
         if match is not None:
@@ -148,9 +161,11 @@ if __name__ == "__main__":
             print("Longitude did not match expected regex format")
             continue
 
-        # If the data is valid and non-zero, print it to stdout and our output file.
-        print(cur_line)
-        output.write(cur_line + "\n")
+        # Write time, latitude, and longitude to stdout and output file.
+        second_str = "{0:.3f}".format(second).zfill(6)
+        output_str = "{0:02d}:{1:02d}:{2} -> {3:.4f}, {4:.4f}"
+        output.write(output_str.format(hour, minute, second_str, lat, lon) + "\n")
+        print(output_str.format(hour, minute, second_str, lat, lon))
 
         # Convert lat/lon into UTM (standardized 2D cartesian projection).
         x, y, _, _ = utm.from_latlon(lat, lon)
