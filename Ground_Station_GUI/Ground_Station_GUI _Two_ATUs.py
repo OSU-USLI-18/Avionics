@@ -1,10 +1,12 @@
-import matplotlib.pyplot as plt
-import sys
+#!/usr/bin/env python3
+
 import glob
-import serial
-import re
-import utm
 import math
+import matplotlib.pyplot as plt
+import re
+import serial
+import sys
+import utm
 
 # Helper function for discovering serial ports.
 def find_serial_ports():
@@ -69,7 +71,7 @@ if __name__ == "__main__":
     r_ax.set_ylabel("North (m)")
     r_ax.grid(color="k", linestyle="-", linewidth=0.5)
 
-   # Regex for extracting time, latitude, and longitude.
+    # Regex for extracting time, latitude, and longitude.
     time_pattern = re.compile(r"([0-9]{2})([0-9]{2})([0-9]{2}\.[0-9]{3}),A")
     lat_pattern  = re.compile(r"([0-9]{2})([0-9]{2}\.[0-9]+),(N|S)")
     lon_pattern  = re.compile(r"([0-9]{3})([0-9]{2}\.[0-9]+),(E|W)")
