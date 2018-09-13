@@ -158,7 +158,6 @@ if __name__ == "__main__":
             ax.autoscale_view()
             fig.canvas.draw()
             fig.canvas.flush_events()
-            num_plots += 1
 
             # Compute and print absolute distance and angle from origin.
             dist  = math.sqrt(x**2 + y**2)
